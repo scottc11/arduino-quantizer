@@ -11,19 +11,6 @@ uint16_t currtouched = 0;
 
 int ledPins[] = {2, 3, 4, 5, 6, 7, 8, 9}; // LED pins
 int ledCnt = 8; // LED COUNT
-byte data = 00000000;
-
-// TONICS
-int I = 0;
-int II = 0;
-int III = 0;
-int IV = 0;
-int V = 0;
-int VI = 0;
-int VII = 0;
-int VIII = 0;
-
-int oldButtonState = LOW;
 
 void setup() {
   Serial.begin(9600);
@@ -50,15 +37,12 @@ void setup() {
 
 void loop() {
 
-  
-  
   // Get the currently touched pads
   // cap.touched will return 16 bits (one byte), with each bit (from 0 - 12) representing the 
   // corrosponding touch pad
   currtouched = cap.touched();
   
   for (uint8_t i=0; i<8; i++) {
-
 
     // BUTTON TOUCHED
     // if it *is* touched and *wasnt* touched before, alert!

@@ -5,6 +5,18 @@
 - using dictionaries is pretty much out of the question due to memory limits
 
 ---
+
+## [I2C](https://learn.sparkfun.com/tutorials/i2c)
+
+- I2C requires a mere two wires, like asynchronous serial, but those two wires can support up to 1008 slave devices.
+- most I2C devices can communicate at 100kHz or 400kHz.
+- It can be fairly trivially implemented in software.
+
+#### Signals
+- Each I2C bus consists of two signals: SCL and SDA. SCL is the clock signal, and SDA is the data signal.
+
+---
+
 ## [Bitwise Operators](https://www.arduino.cc/reference/en/language/structure/bitwise-operators/bitwiseand/)
 - One of the most common uses of bitwise AND is to select a particular bit (or bits) from an integer value, often called masking.
 - [BitMath Tutorial](http://playground.arduino.cc/Code/BitMath)
