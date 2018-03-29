@@ -1,3 +1,10 @@
+## LIBRARIES / DEPENDENCIES
+
+#### [Adafruit MPR121](https://learn.adafruit.com/adafruit-mpr121-12-key-capacitive-touch-sensor-breakout-tutorial/overview)
+#### [MCP4725 DAC](https://www.adafruit.com/product/935)
+
+---
+
 # Arduino Programming Practices
 
 #### Things to Note:
@@ -100,6 +107,3 @@ void loop() {
 ```
 
 ---
-## LIBRARIES
-
-#### [Adafruit MPR121](https://learn.adafruit.com/adafruit-mpr121-12-key-capacitive-touch-sensor-breakout-tutorial/overview)

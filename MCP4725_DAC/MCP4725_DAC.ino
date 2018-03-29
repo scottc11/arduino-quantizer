@@ -36,23 +36,19 @@ int VIII = 0;
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("Hello!");
 
   // For Adafruit MCP4725A1 the address is 0x62 (default) or 0x63 (ADDR pin tied to VCC)
   dac.begin(0x62);
   
-  Serial.println("Generating a triangle wave");
 }
 
 void loop() {
 
   uint16_t output = 819;
 
-  for (uint16_t i=819; i<4095; i++) {
+  for (uint16_t i=68.25; i<4095; i=i+68.25) {
+    Serial.println(i);
     dac.setVoltage(i, false);
     delay(1000);
   }
-  
-  
-
 }
