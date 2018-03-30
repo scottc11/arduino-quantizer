@@ -19,7 +19,37 @@ The `Vout` will be determined depending on which `MODE` the quantizer is in:
 
 `ARP MODE`:
   - the 'quantized' `Vin`
+  - LEDs represent active notes `Vin` should be quantized to
   - does require `Vin`
+
+Modular synths tend to follow a scheme were a specific change in voltage – such as 1.00 volts – results in a precisely one octave change in pitch. In a 1 volt per octave scheme, 1/12 of a volt change results in a semitone change in pitch.
+
+```
+5.00v == 5 octaves
+1.00v == 1 octave == 819
+0.08333v == half-tone == 68.25
+0.16666v == whole-tone == 136.5
+```
+
+MCP4725 Library accepts input as a uint_t value between  0 to 4095
+
+
+```
+I    --> 1.0v ------>  819
+II   --> 1.16666v -->  955.5
+III  --> 1.33332v -->  1092
+IV   --> 1.41665v -->  1160.25
+V    --> 1.58331v -->  1296.75
+VI   --> 1.74997v --> 1433.25
+VII  --> 1.91663v --> 1569.75
+VIII --> *2.0v    --> 1638
+
+* round up to make perfect octave
+```
+
+### Moog Werkstatt Calibration
+
+Connect `Vout` of quantizer into the `VCO EXP IN` on the moog werkstatt.  You will have to remove the front panel of the werkstatt and modify the trimmer labelled `VCO EXP TRIM` so that 1.0v and 2.0v coming from `Vout` will make a perfect octave.  Use a tuner for this calibration.
 
 
 ---

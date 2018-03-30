@@ -9,14 +9,14 @@ Adafruit_MPR121 cap = Adafruit_MPR121();
 Adafruit_MCP4725 dac;
 
 // TONICS
-int I = 0;
-int II = 0;
-int III = 0;
-int IV = 0;
-int V = 0;
-int VI = 0;
-int VII = 0;
-int VIII = 0;
+int I = 819;
+int II = 955.5;
+int III = 1092;
+int IV = 1160.25;
+int V = 1296.75;
+int VI = 1433.25;
+int VII = 1569.75;
+int VIII = 1638;
 
 
 // Keeps track of the last pins touched
@@ -26,9 +26,8 @@ uint16_t currtouched = 0;
 
 int ledPins[] = {2, 3, 4, 5, 6, 7, 8, 9}; // LED pins
 int ledCnt = 8; // LED COUNT
-int quantizedVoltages[] = {0, 0, 0, 0, 0, 0, 0, 0};
-
-String MODE = "mono"
+int quantizedVoltages[] = {I, II, III, IV, V, VI, VII, VIII}; // not actual voltage, but int conversion
+int activeTonics[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 void setup() {
   Serial.begin(9600);
@@ -68,7 +67,6 @@ void loop() {
       digitalWrite(ledPins[i], !digitalRead(ledPins[i]));
       
       // Set quantized voltage output
-      quantizedVoltages[i] = i * 68.25;
       dac.setVoltage(quantizedVoltages[i], false);
     }
 
