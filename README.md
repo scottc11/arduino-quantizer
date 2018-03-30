@@ -47,6 +47,34 @@ VIII --> *2.0v    --> 1638
 * round up to make perfect octave
 ```
 
+### Quantization of `Vin` to `activeNotes`:
+divide number of activeTonics by 1023. This will give you the thresholds for each note. Copy these thresholds to an array, from lowest to highest.
+```
+
+int activeCount = 0;
+int activeNotes[];
+int thresholdArray[];
+
+
+for (int i=0; i<arrLength; i++) {
+  if (activeTonics[i] == true) {
+    activeNotes[activeCount] = quantizedVoltages[i];
+    activeCount += 1;
+  }
+}
+int threshold = 1023 / activeCount;
+for (int i=0; i<activeCount; i++) {
+  thresholdArray[i] = threshold * (i + 1);
+}
+
+for (int i=0; i<activeCount; i++) {
+  if (Vin < thresholdArray[i]) {
+    Vout = activeNotes[i];
+  }
+}
+```
+
+
 ### Moog Werkstatt Calibration
 
 Connect `Vout` of quantizer into the `VCO EXP IN` on the moog werkstatt.  You will have to remove the front panel of the werkstatt and modify the trimmer labelled `VCO EXP TRIM` so that 1.0v and 2.0v coming from `Vout` will make a perfect octave.  Use a tuner for this calibration.

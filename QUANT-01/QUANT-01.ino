@@ -18,6 +18,10 @@ int VI = 1433.25;
 int VII = 1569.75;
 int VIII = 1638;
 
+// VOLTAGE INPUT
+int VinPin = A0;    // Voltage Input Pin
+int Vin = 0;        // Variable to store value of VinPin
+int Vout = 0;       // quantized voltage output
 
 // Keeps track of the last pins touched
 // so we know when buttons are 'released'
@@ -29,6 +33,42 @@ int arrLength = 8; // length of arrays
 int ledPins[] = {2, 3, 4, 5, 6, 7, 8, 9}; // LED pins
 int quantizedVoltages[] = {I, II, III, IV, V, VI, VII, VIII}; // not actual voltage, but int conversion
 bool activeTonics[] = {0, 0, 0, 0, 0, 0, 0, 0}; // true == 1, false == 0
+
+int activeCount = 0;
+int activeNotes[8];
+int thresholdArray[8];
+
+
+// SET ACTIVE NOTES FOR Vout
+void setActiveNotes() {
+  activeCount = 0;
+  for (int i=0; i<arrLength; i++) {
+    if (activeTonics[i] == true) {
+      activeNotes[activeCount] = quantizedVoltages[i];
+      activeCount += 1;
+    }
+  }
+}
+
+void setActiveVoltageThresholds(int count) {
+  int threshold = 1023 / activeCount;
+  for (int i=0; i<count; i++) {
+    thresholdArray[i] = threshold * (i + 1);
+  }
+}
+
+void setVoltageOut() {
+  Vin = analogRead(VinPin);
+  for (int i=0; i<activeCount; i++) {
+    if (Vin < thresholdArray[i]) {
+      Vout = activeNotes[i];
+      
+      // Set quantized voltage output
+      dac.setVoltage(Vout, false);
+    }
+  }
+}
+
 
 void setup() {
   Serial.begin(9600);
@@ -56,6 +96,8 @@ void loop() {
   // corrosponding touch pad
   currtouched = cap.touched();
   
+  
+  
   // Iterate over first 8 touch sensors
   for (uint8_t i=0; i<arrLength; i++) {
 
@@ -70,8 +112,12 @@ void loop() {
       // toggle digital pin state based on tonic state
       digitalWrite(ledPins[i], activeTonics[i]);
 
-      // Set quantized voltage output
-      dac.setVoltage(quantizedVoltages[i], false);
+      setActiveNotes();
+      setActiveVoltageThresholds(activeCount);
+      Serial.print("active tonics count: "); Serial.println(activeCount);
+      Serial.print("threshold: "); Serial.println(thresholdArray[0]);
+      Serial.print("first active note: "); Serial.println(activeNotes[0]);
+      
     }
 
 
@@ -80,13 +126,15 @@ void loop() {
     //  if it *was* touched and now *isnt*, alert!
     if (!(currtouched & _BV(i)) && (lasttouched & _BV(i)) ) {
       
-      Serial.print(i); Serial.print(" released :: active? == ");
-      Serial.println(activeTonics[i]);
+      Serial.print(i); Serial.println(" released");
     }
   }
   
   // reset our state
   lasttouched = currtouched;
+
+  // apply Vout based on Vin
+  setVoltageOut();
 }
 
 
