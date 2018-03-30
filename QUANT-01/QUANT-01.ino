@@ -24,8 +24,9 @@ int VIII = 1638;
 uint16_t lasttouched = 0;
 uint16_t currtouched = 0;
 
+int arrLength = 8; // length of arrays
+
 int ledPins[] = {2, 3, 4, 5, 6, 7, 8, 9}; // LED pins
-int ledCnt = 8; // LED COUNT
 int quantizedVoltages[] = {I, II, III, IV, V, VI, VII, VIII}; // not actual voltage, but int conversion
 bool activeTonics[] = {0, 0, 0, 0, 0, 0, 0, 0}; // true == 1, false == 0
 
@@ -43,7 +44,7 @@ void setup() {
   dac.begin(0x62);
   
   // Set pinouts for LEDs
-  for(int p=0; p<ledCnt; p++) {
+  for(int p=0; p<arrLength; p++) {
     pinMode(ledPins[p], OUTPUT); // Set the mode to OUTPUT
   }
 }
@@ -56,7 +57,7 @@ void loop() {
   currtouched = cap.touched();
   
   // Iterate over first 8 touch sensors
-  for (uint8_t i=0; i<8; i++) {
+  for (uint8_t i=0; i<arrLength; i++) {
 
     // BUTTON TOUCHED
     // if it *is* touched and *wasnt* touched before, alert!
