@@ -4,12 +4,44 @@
 #### [MCP4725 DAC](https://www.adafruit.com/product/935)
 
 ---
+## QUANTIZER LOGIC
 
+The QUANTIZER needs to output a single voltage relative to the last `touched` or `selected` (via voltage input)
+
+The currently active notes will be toggled on / off via the touch sensors.
+
+There is one touch sensor and one toggle switch for each `TONIC`.  Each `TONIC` will have a state equal to `major`, `minor`, `augmented`, and `diminished`. The state of each `TONIC`will be determined by their respective toggle switches.
+
+The `Vout` will be determined depending on which `MODE` the quantizer is in:
+
+`OUT MODE`: The last touched sensor
+  - does not require `Vin`
+
+`ARP MODE`:
+  - the 'quantized' `Vin`
+  - does require `Vin`
+
+
+---
 # Arduino Programming Practices
 
 #### Things to Note:
 - Arduino code is essentially C/C++
 - using dictionaries is pretty much out of the question due to memory limits
+
+#### constants vs variables
+
+constants don't take up valuable RAM space (the pre-processor subs the values in where needed), whereas variable declarations do.
+
+```
+// constants
+#define VALUE_A 3
+#define VALUE_B 1
+
+// variables
+int value_a = 3;
+int value_b = 1;
+```
 
 ---
 

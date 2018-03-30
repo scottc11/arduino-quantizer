@@ -22,18 +22,6 @@
 
 Adafruit_MCP4725 dac;
 
-// TONICS
-int I = 0;
-int II = 0;
-int III = 0;
-int IV = 0;
-int V = 0;
-int VI = 0;
-int VII = 0;
-int VIII = 0;
-
-
-
 void setup() {
   Serial.begin(9600);
 
