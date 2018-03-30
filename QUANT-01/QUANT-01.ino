@@ -65,7 +65,9 @@ void setVoltageOut() {
       
       // Set quantized voltage output
       dac.setVoltage(Vout, false);
+      break;
     }
+    delay(5);
   }
 }
 
@@ -114,10 +116,6 @@ void loop() {
 
       setActiveNotes();
       setActiveVoltageThresholds(activeCount);
-      Serial.print("active tonics count: "); Serial.println(activeCount);
-      Serial.print("threshold: "); Serial.println(thresholdArray[0]);
-      Serial.print("first active note: "); Serial.println(activeNotes[0]);
-      
     }
 
 
@@ -125,6 +123,18 @@ void loop() {
     // BUTTON RELEASED
     //  if it *was* touched and now *isnt*, alert!
     if (!(currtouched & _BV(i)) && (lasttouched & _BV(i)) ) {
+      
+      for (int i=0; i<arrLength; i++) {
+        Serial.print(activeNotes[i]); Serial.print(" : ");
+      }
+      
+      Serial.println("");
+      for (int i=0; i<arrLength; i++) {
+        Serial.print(thresholdArray[i]); Serial.print(" : ");
+      }
+      
+      Serial.println("");
+      Serial.print("active tonics count: "); Serial.println(activeCount);
       
       Serial.print(i); Serial.println(" released");
     }
