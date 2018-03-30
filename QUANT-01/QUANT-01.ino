@@ -27,7 +27,7 @@ uint16_t currtouched = 0;
 int ledPins[] = {2, 3, 4, 5, 6, 7, 8, 9}; // LED pins
 int ledCnt = 8; // LED COUNT
 int quantizedVoltages[] = {I, II, III, IV, V, VI, VII, VIII}; // not actual voltage, but int conversion
-int activeTonics[] = {0, 0, 0, 0, 0, 0, 0, 0};
+bool activeTonics[] = {0, 0, 0, 0, 0, 0, 0, 0}; // true == 1, false == 0
 
 void setup() {
   Serial.begin(9600);
@@ -63,9 +63,12 @@ void loop() {
     if ( (currtouched & _BV(i) ) && !( lasttouched & _BV(i) ) ) {
       Serial.print(i); Serial.print(" touched :: "); Serial.println(i, BIN);
       
-      // toggle digital pin state based on previous state
-      digitalWrite(ledPins[i], !digitalRead(ledPins[i]));
+      // activate / deactivate tonic
+      activeTonics[i] = !activeTonics[i];
       
+      // toggle digital pin state based on tonic state
+      digitalWrite(ledPins[i], activeTonics[i]);
+
       // Set quantized voltage output
       dac.setVoltage(quantizedVoltages[i], false);
     }
@@ -75,8 +78,9 @@ void loop() {
     // BUTTON RELEASED
     //  if it *was* touched and now *isnt*, alert!
     if (!(currtouched & _BV(i)) && (lasttouched & _BV(i)) ) {
-      Serial.print(i); Serial.print(" released :: "); Serial.println(i, BIN);
-
+      
+      Serial.print(i); Serial.print(" released :: active? == ");
+      Serial.println(activeTonics[i]);
     }
   }
   
