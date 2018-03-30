@@ -8,30 +8,38 @@ Adafruit_MPR121 cap = Adafruit_MPR121();
 
 Adafruit_MCP4725 dac;
 
-// TONICS
-int I = 819;
-int II = 955.5;
-int III = 1092;
-int IV = 1160.25;
-int V = 1296.75;
-int VI = 1433.25;
-int VII = 1569.75;
-int VIII = 1638;
+// CONSTANTS
+int LENGTH = 8; // length of arrays
 
-// VOLTAGE INPUT
+
+// TONICS
+
+
+// VOLTAGE INPUT/OUTPUT
 int VinPin = A0;    // Voltage Input Pin
 int Vin = 0;        // Variable to store value of VinPin
 int Vout = 0;       // quantized voltage output
 
 // Keeps track of the last pins touched
-// so we know when buttons are 'released'
 uint16_t lasttouched = 0;
 uint16_t currtouched = 0;
 
-int arrLength = 8; // length of arrays
+// Toggle Switches
+int switchPins[] = {10, 11, 12, 13, 0, 0, 0, 0};
+bool newSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
+bool oldSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 int ledPins[] = {2, 3, 4, 5, 6, 7, 8, 9}; // LED pins
-int quantizedVoltages[] = {I, II, III, IV, V, VI, VII, VIII}; // not actual voltage, but int conversion
+int quantizedVoltages[8][2] = {
+    {0, 0}, // I
+    {136.5, 0},
+    {204.75, 273},
+    {341.25, 0},
+    {477.75, 0},
+    {614.25, 0},
+    {750.75, 0},
+    {819, 0} // VIII
+  };
 bool activeTonics[] = {0, 0, 0, 0, 0, 0, 0, 0}; // true == 1, false == 0
 
 int activeCount = 0;
@@ -42,9 +50,10 @@ int thresholdArray[8];
 // SET ACTIVE NOTES FOR Vout
 void setActiveNotes() {
   activeCount = 0;
-  for (int i=0; i<arrLength; i++) {
+  for (int i=0; i<LENGTH; i++) {
     if (activeTonics[i] == true) {
-      activeNotes[activeCount] = quantizedVoltages[i];
+      int state = newSwitchStates[i];
+      activeNotes[activeCount] = quantizedVoltages[i][state];
       activeCount += 1;
     }
   }
@@ -67,7 +76,7 @@ void setVoltageOut() {
       dac.setVoltage(Vout, false);
       break;
     }
-    delay(5);
+    delay(1);
   }
 }
 
@@ -86,9 +95,11 @@ void setup() {
   dac.begin(0x62);
   
   // Set pinouts for LEDs
-  for(int p=0; p<arrLength; p++) {
+  for(int p=0; p<LENGTH; p++) {
     pinMode(ledPins[p], OUTPUT); // Set the mode to OUTPUT
   }
+  // Set pinouts for toggle Switches
+  pinMode(12, INPUT);
 }
 
 void loop() {
@@ -98,10 +109,18 @@ void loop() {
   // corrosponding touch pad
   currtouched = cap.touched();
   
-  
+//  Serial.println(newSwitchStates[2]);
+  newSwitchStates[2] = digitalRead(12);
+
+  if ( newSwitchStates[2] != oldSwitchStates[2] ) {
+    Serial.println("switched!");
+    newSwitchStates[2] = newSwitchStates[2];
+    oldSwitchStates[2] = newSwitchStates[2];
+    setActiveNotes();
+  }
   
   // Iterate over first 8 touch sensors
-  for (uint8_t i=0; i<arrLength; i++) {
+  for (uint8_t i=0; i<LENGTH; i++) {
 
     // BUTTON TOUCHED
     // if it *is* touched and *wasnt* touched before, alert!
@@ -124,12 +143,12 @@ void loop() {
     //  if it *was* touched and now *isnt*, alert!
     if (!(currtouched & _BV(i)) && (lasttouched & _BV(i)) ) {
       
-      for (int i=0; i<arrLength; i++) {
+      for (int i=0; i<LENGTH; i++) {
         Serial.print(activeNotes[i]); Serial.print(" : ");
       }
       
       Serial.println("");
-      for (int i=0; i<arrLength; i++) {
+      for (int i=0; i<LENGTH; i++) {
         Serial.print(thresholdArray[i]); Serial.print(" : ");
       }
       

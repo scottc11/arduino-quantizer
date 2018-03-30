@@ -177,7 +177,13 @@ Sometimes you might need to set multiple output pins at exactly the same time. C
 
 ------
 
-### Button Logic
+### Button / Switch Logic
+
+###### [Polling vs interrupts](http://www.martyncurrey.com/switching-things-on-and-off-with-an-arduino/)
+
+<b>`Polling`</b> is where we are always checking the status of something. Inside the `loop()` function we continuously check the pin state with digitalRead(). We do not know if the pin state has changed until we look at it.
+
+`Interrupts` is where the current process is interrupted and a new process is performed (the Arduino reacts to a pin state whether or not it is being checked). This means the code does not need to worry about the pin until the Arduino tells us to.
 
 ##### Turn LED On/Off with push button
 
