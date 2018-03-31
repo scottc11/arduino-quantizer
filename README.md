@@ -101,9 +101,13 @@ int value_a = 3;
 int value_b = 1;
 ```
 
+#### [Charlieplexing](https://en.wikipedia.org/wiki/Charlieplexing)
+- LED matrix
+- Toggle Switch Matrix
+
 ---
 
-## [I2C](https://learn.sparkfun.com/tutorials/i2c)
+# [I2C](https://learn.sparkfun.com/tutorials/i2c)
 
 - I2C requires a mere two wires, like asynchronous serial, but those two wires can support up to 1008 slave devices.
 - most I2C devices can communicate at 100kHz or 400kHz.
@@ -114,7 +118,7 @@ int value_b = 1;
 
 ---
 
-## [Bitwise Operators](https://www.arduino.cc/reference/en/language/structure/bitwise-operators/bitwiseand/)
+# [Bitwise Operators](https://www.arduino.cc/reference/en/language/structure/bitwise-operators/bitwiseand/)
 - One of the most common uses of bitwise AND is to select a particular bit (or bits) from an integer value, often called masking.
 - [BitMath Tutorial](http://playground.arduino.cc/Code/BitMath)
 

@@ -108,13 +108,11 @@ void loop() {
   // cap.touched will return 16 bits (one byte), with each bit (from 0 - 12) representing the 
   // corrosponding touch pad
   currtouched = cap.touched();
-  
-//  Serial.println(newSwitchStates[2]);
+
   newSwitchStates[2] = digitalRead(12);
 
   if ( newSwitchStates[2] != oldSwitchStates[2] ) {
-    Serial.println("switched!");
-    newSwitchStates[2] = newSwitchStates[2];
+    Serial.print("switched: "); Serial.println(newSwitchStates[2]);
     oldSwitchStates[2] = newSwitchStates[2];
     setActiveNotes();
   }
