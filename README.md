@@ -1,6 +1,7 @@
 ## LIBRARIES / DEPENDENCIES
 
 #### [Adafruit MPR121](https://learn.adafruit.com/adafruit-mpr121-12-key-capacitive-touch-sensor-breakout-tutorial/overview)
+- [eagle files can be found here](https://learn.sparkfun.com/tutorials/mpr121-hookup-guide)
 #### [MCP4725 DAC](https://www.adafruit.com/product/935)
 
 ---
