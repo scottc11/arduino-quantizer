@@ -44,7 +44,7 @@ int quantizedVoltages[8][2] = {
   };
 bool activeNotes[] = {0, 0, 0, 0, 0, 0, 0, 0}; // true == 1, false == 0
 
-int activeCount = 0;
+int activeCount = 0;   // how many notes are active/selected
 int activeVoltages[8]; // active quantized voltages (from low to high)
 int thresholdArray[8]; // int representation of Vin mapped to activeVoltages
 
