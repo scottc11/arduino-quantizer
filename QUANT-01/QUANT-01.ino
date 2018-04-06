@@ -49,32 +49,7 @@ int activeVoltages[8]; // active quantized voltages (from low to high)
 int thresholdArray[8]; // int representation of Vin mapped to activeVoltages
 
 
-
-void setActiveNotes(int index) {
-  if (QUANTIZER_MODE) {
-    // activate / deactivate notes
-    activeNotes[index] = !activeNotes[index];
-    
-    // toggle digital pin state (LEDs) based on active/inactive notes
-    digitalWrite(ledPins[index], activeNotes[index]);
-  }
-  else {
-    // set last pressed note HIGH and reset all others to LOW
-    for (int i=0; i<LENGTH; i++) {
-      if (i == index) {
-        activeNotes[i] = HIGH;
-      } else {
-        activeNotes[i] = LOW;
-      }
-      digitalWrite(ledPins[i], activeNotes[i]);
-    }
-  }
-  
-}
-
-
-
-
+// mapping Vin to a Vout in activeVoltages
 void setActiveVoltageThresholds(int count) {
   int threshold = 1023 / count;
   for (int i=0; i<count; i++) {
@@ -99,7 +74,7 @@ void setActiveVoltages() {
 
 
 
-void setVoltageOut(int i) {
+void setVoltageOut(int index) {
   if (QUANTIZER_MODE) {
     Vin = analogRead(VinPin);
     for (int i=0; i<activeCount; i++) {
@@ -113,13 +88,39 @@ void setVoltageOut(int i) {
       delay(1);
     }
   } else {
-    int state = newSwitchStates[i];
-    Vout = quantizedVoltages[i][state];
+    int state = newSwitchStates[index];
+    Vout = quantizedVoltages[index][state];
     // Set quantized voltage output
     dac.setVoltage(Vout, false);
   }
 }
 
+
+
+void setActiveNotes(int index) {
+  if (QUANTIZER_MODE) {
+    // activate / deactivate notes
+    activeNotes[index] = !activeNotes[index];
+    
+    // toggle digital pin state (LEDs) based on active/inactive notes
+    digitalWrite(ledPins[index], activeNotes[index]);
+
+    setActiveVoltages();
+  }
+  else {
+    // set last pressed note HIGH and reset all others to LOW
+    for (int i=0; i<LENGTH; i++) {
+      if (i == index) {
+        activeNotes[i] = HIGH;
+        setVoltageOut(i);
+      } else {
+        activeNotes[i] = LOW;
+      }
+      digitalWrite(ledPins[i], activeNotes[i]);
+    }
+  }
+  
+}
 
 
 
@@ -163,7 +164,7 @@ void loop() {
   if ( newSwitchStates[2] != oldSwitchStates[2] ) {
     Serial.print("switched: "); Serial.println(newSwitchStates[2]);
     oldSwitchStates[2] = newSwitchStates[2];
-    setActiveVoltages();
+    setActiveNotes(2);
   }
 
   // Iterate over first 8 touch sensors
@@ -175,8 +176,6 @@ void loop() {
       Serial.print(i); Serial.print(" touched :: "); Serial.println(i, BIN);
 
       setActiveNotes(i);
-//      setActiveVoltages();
-      setVoltageOut(i);
     }
 
 
@@ -208,5 +207,7 @@ void loop() {
   lasttouched = currtouched;
 
   // apply Vout based on Vin
-//  setVoltageOut();
+  if (QUANTIZER_MODE) {
+    setVoltageOut(0);
+  }
 }
