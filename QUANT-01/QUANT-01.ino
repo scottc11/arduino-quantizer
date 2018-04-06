@@ -206,7 +206,7 @@ void loop() {
   // reset touch sensors state
   lasttouched = currtouched;
 
-  // apply Vout based on Vin
+  // if in quantizer mode apply Vout based on Vin
   if (QUANTIZER_MODE) {
     setVoltageOut(0);
   }
