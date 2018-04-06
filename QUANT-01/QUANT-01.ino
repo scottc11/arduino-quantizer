@@ -29,7 +29,7 @@ int switchPins[] = {10, 11, 12, 13, 0, 0, 0, 0};
 bool newSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
 bool oldSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-bool QUANTIZE_MODE = false;
+bool QUANTIZER_MODE = false;
 
 int ledPins[] = {2, 3, 4, 5, 6, 7, 8, 9}; // LED pins
 int quantizedVoltages[8][2] = {
@@ -44,13 +44,48 @@ int quantizedVoltages[8][2] = {
   };
 bool activeNotes[] = {0, 0, 0, 0, 0, 0, 0, 0}; // true == 1, false == 0
 
-int activeCount = 0;   // how many notes are active/selected
+int activeCount = 0;   // how many notes are active/selected (0 === 1 active note)
 int activeVoltages[8]; // active quantized voltages (from low to high)
 int thresholdArray[8]; // int representation of Vin mapped to activeVoltages
 
 
+
+void setActiveNotes(int index) {
+  if (QUANTIZER_MODE) {
+    // activate / deactivate notes
+    activeNotes[index] = !activeNotes[index];
+    
+    // toggle digital pin state (LEDs) based on active/inactive notes
+    digitalWrite(ledPins[index], activeNotes[index]);
+  }
+  else {
+    // set last pressed note HIGH and reset all others to LOW
+    for (int i=0; i<LENGTH; i++) {
+      if (i == index) {
+        activeNotes[i] = HIGH;
+      } else {
+        activeNotes[i] = LOW;
+      }
+      digitalWrite(ledPins[i], activeNotes[i]);
+    }
+  }
+  
+}
+
+
+
+
+void setActiveVoltageThresholds(int count) {
+  int threshold = 1023 / count;
+  for (int i=0; i<count; i++) {
+    thresholdArray[i] = threshold * (i + 1);
+  }
+}
+
+
+
 // SET ACTIVE NOTES FOR Vout
-void setActiveNotes() {
+void setActiveVoltages() {
   activeCount = 0;
   for (int i=0; i<LENGTH; i++) {
     if (activeNotes[i] == true) {
@@ -59,29 +94,35 @@ void setActiveNotes() {
       activeCount += 1;
     }
   }
+  setActiveVoltageThresholds(activeCount);
 }
 
-//
-void setActiveVoltageThresholds(int count) {
-  int threshold = 1023 / count;
-  for (int i=0; i<count; i++) {
-    thresholdArray[i] = threshold * (i + 1);
-  }
-}
 
-void setVoltageOut() {
-  Vin = analogRead(VinPin);
-  for (int i=0; i<activeCount; i++) {
-    if (Vin < thresholdArray[i]) {
-      Vout = activeVoltages[i];
 
-      // Set quantized voltage output
-      dac.setVoltage(Vout, false);
-      break;
+void setVoltageOut(int i) {
+  if (QUANTIZER_MODE) {
+    Vin = analogRead(VinPin);
+    for (int i=0; i<activeCount; i++) {
+      if (Vin < thresholdArray[i]) {
+        Vout = activeVoltages[i];
+  
+        // Set quantized voltage output
+        dac.setVoltage(Vout, false);
+        break;
+      }
+      delay(1);
     }
-    delay(1);
+  } else {
+    int state = newSwitchStates[i];
+    Vout = quantizedVoltages[i][state];
+    // Set quantized voltage output
+    dac.setVoltage(Vout, false);
   }
 }
+
+
+
+
 
 
 void setup() {
@@ -105,6 +146,12 @@ void setup() {
   pinMode(12, INPUT);
 }
 
+
+
+
+
+
+
 void loop() {
 
   // Get the currently touched pads
@@ -116,7 +163,7 @@ void loop() {
   if ( newSwitchStates[2] != oldSwitchStates[2] ) {
     Serial.print("switched: "); Serial.println(newSwitchStates[2]);
     oldSwitchStates[2] = newSwitchStates[2];
-    setActiveNotes();
+    setActiveVoltages();
   }
 
   // Iterate over first 8 touch sensors
@@ -127,14 +174,9 @@ void loop() {
     if ( (currtouched & _BV(i) ) && !( lasttouched & _BV(i) ) ) {
       Serial.print(i); Serial.print(" touched :: "); Serial.println(i, BIN);
 
-      // activate / deactivate notes
-      activeNotes[i] = !activeNotes[i];
-
-      // toggle digital pin state (LEDs) based on tonic state
-      digitalWrite(ledPins[i], activeNotes[i]);
-
-      setActiveNotes();
-      setActiveVoltageThresholds(activeCount);
+      setActiveNotes(i);
+//      setActiveVoltages();
+      setVoltageOut(i);
     }
 
 
@@ -150,6 +192,9 @@ void loop() {
       Serial.println("");
       for (int i=0; i<LENGTH; i++) {
         Serial.print(thresholdArray[i]); Serial.print(" : ");
+        if (!activeNotes[i]) {
+          digitalWrite(ledPins[i], LOW);
+        }
       }
 
       Serial.println("");
@@ -159,9 +204,9 @@ void loop() {
     }
   }
 
-  // reset our state
+  // reset touch sensors state
   lasttouched = currtouched;
 
   // apply Vout based on Vin
-  setVoltageOut();
+//  setVoltageOut();
 }
