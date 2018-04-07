@@ -20,6 +20,12 @@ int VinPin = A0;    // Voltage Input Pin
 int Vin = 0;        // Variable to store value of VinPin
 int Vout = 0;       // quantized voltage output
 
+// MODE
+int ModePin = A1;   // toggles QUANTIZER_MODE variable true/false
+bool newModeSwitchState = 0;
+bool oldModeSwitchState = 0;
+bool QUANTIZER_MODE = false;
+
 // Keeps track of the last pins touched
 uint16_t lasttouched = 0;
 uint16_t currtouched = 0;
@@ -29,7 +35,6 @@ int switchPins[] = {10, 11, 12, 13, 0, 0, 0, 0};
 bool newSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
 bool oldSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-bool QUANTIZER_MODE = true;
 
 int ledPins[] = {2, 3, 4, 5, 6, 7, 8, 9}; // LED pins
 int quantizedVoltages[8][2] = {
@@ -43,10 +48,13 @@ int quantizedVoltages[8][2] = {
     {819, 0} // VIII
   };
 bool activeNotes[] = {0, 0, 0, 0, 0, 0, 0, 0}; // true == 1, false == 0
+bool activeQuantizedNotes[] = {0, 0, 0, 0, 0, 0, 0, 0};
+bool activeMonophonicNotes[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 int activeCount = 0;   // how many notes are active/selected (0 === 1 active note)
 int activeVoltages[8]; // active quantized voltages (from low to high)
 int thresholdArray[8]; // int representation of Vin mapped to activeVoltages
+
 
 
 // mapping Vin to a Vout in activeVoltages
@@ -63,7 +71,7 @@ void setActiveVoltageThresholds(int count) {
 void setActiveVoltages() {
   activeCount = 0;
   for (int i=0; i<LENGTH; i++) {
-    if (activeNotes[i] == true) {
+    if (activeQuantizedNotes[i] == true) {
       int state = newSwitchStates[i];
       activeVoltages[activeCount] = quantizedVoltages[i][state];
       activeCount += 1;
@@ -100,10 +108,12 @@ void setVoltageOut(int index) {
 void setActiveNotes(int index) {
   if (QUANTIZER_MODE) {
     // activate / deactivate notes
-    activeNotes[index] = !activeNotes[index];
+//    activeNotes[index] = !activeNotes[index];
+
+    activeQuantizedNotes[index] = !activeQuantizedNotes[index];
     
     // toggle digital pin state (LEDs) based on active/inactive notes
-    digitalWrite(ledPins[index], activeNotes[index]);
+    digitalWrite(ledPins[index], activeQuantizedNotes[index]);
 
     setActiveVoltages();
   }
@@ -111,20 +121,42 @@ void setActiveNotes(int index) {
     // set last pressed note HIGH and reset all others to LOW
     for (int i=0; i<LENGTH; i++) {
       if (i == index) {
-        activeNotes[i] = HIGH;
+        activeMonophonicNotes[i] = HIGH;
         setVoltageOut(i);
       } else {
-        activeNotes[i] = LOW;
+        activeMonophonicNotes[i] = LOW;
       }
-      digitalWrite(ledPins[i], activeNotes[i]);
+      digitalWrite(ledPins[i], activeMonophonicNotes[i]);
     }
   }
   
 }
 
 
+// SET MODE
+void toggleMode(bool switchState) {
+  QUANTIZER_MODE = switchState;
+
+  if (QUANTIZER_MODE) {
+    for (int i=0; i<LENGTH; i++) {
+      // toggle digital pin state (LEDs) based on active/inactive notes
+      digitalWrite(ledPins[i], activeQuantizedNotes[i]);
+      setActiveVoltages();
+    }
+    
+  } else {
+    for (int i=0; i<LENGTH; i++) {
+      // toggle digital pin state (LEDs) based on active/inactive notes
+      digitalWrite(ledPins[i], activeMonophonicNotes[i]);
+      if (activeMonophonicNotes[i] == HIGH) {
+        setVoltageOut(i);
+      }
+    }
+  }
+}
 
 
+// ==============================================================================================================
 
 void setup() {
   Serial.begin(9600);
@@ -145,6 +177,10 @@ void setup() {
   }
   // Set pinouts for toggle Switches
   pinMode(12, INPUT);
+
+  // A1 acting as digitalInput
+  pinMode(A1, INPUT_PULLUP);
+  toggleMode(digitalRead(A1));
 }
 
 
@@ -159,6 +195,15 @@ void loop() {
   // cap.touched will return 16 bits (one byte), with each bit (from 0 - 12) representing the corrosponding touch pad
   currtouched = cap.touched();
 
+  newModeSwitchState = digitalRead(A1);
+
+  if (newModeSwitchState != oldModeSwitchState) {
+    Serial.print("Switching MODE to: "); Serial.println(newModeSwitchState);
+    oldModeSwitchState = newModeSwitchState;
+    toggleMode(newModeSwitchState);
+  }
+
+  
   newSwitchStates[2] = digitalRead(12);
 
   if ( newSwitchStates[2] != oldSwitchStates[2] ) {
@@ -184,6 +229,7 @@ void loop() {
     //  if it *was* touched and now *isnt*, alert!
     if (!(currtouched & _BV(i)) && (lasttouched & _BV(i)) ) {
 
+      Serial.print("active voltages -->   ");
       for (int i=0; i<LENGTH; i++) {
         Serial.print(activeVoltages[i]); Serial.print(" : ");
       }
@@ -191,9 +237,9 @@ void loop() {
       Serial.println("");
       for (int i=0; i<LENGTH; i++) {
         Serial.print(thresholdArray[i]); Serial.print(" : ");
-        if (!activeNotes[i]) {
-          digitalWrite(ledPins[i], LOW);
-        }
+//        if (!activeNotes[i]) {
+//          digitalWrite(ledPins[i], LOW);
+//        }
       }
 
       Serial.println("");
