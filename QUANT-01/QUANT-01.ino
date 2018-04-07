@@ -29,7 +29,7 @@ int switchPins[] = {10, 11, 12, 13, 0, 0, 0, 0};
 bool newSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
 bool oldSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-bool QUANTIZER_MODE = false;
+bool QUANTIZER_MODE = true;
 
 int ledPins[] = {2, 3, 4, 5, 6, 7, 8, 9}; // LED pins
 int quantizedVoltages[8][2] = {
@@ -164,7 +164,7 @@ void loop() {
   if ( newSwitchStates[2] != oldSwitchStates[2] ) {
     Serial.print("switched: "); Serial.println(newSwitchStates[2]);
     oldSwitchStates[2] = newSwitchStates[2];
-    setActiveNotes(2);
+    setActiveVoltages();
   }
 
   // Iterate over first 8 touch sensors
