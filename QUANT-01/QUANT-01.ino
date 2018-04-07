@@ -47,9 +47,10 @@ int quantizedVoltages[8][2] = {
     {750.75, 0},
     {819, 0} // VIII
   };
-bool activeNotes[] = {0, 0, 0, 0, 0, 0, 0, 0}; // true == 1, false == 0
+
 bool activeQuantizedNotes[] = {0, 0, 0, 0, 0, 0, 0, 0};
 bool activeMonophonicNotes[] = {0, 0, 0, 0, 0, 0, 0, 0};
+int lastTouchedIndex = 0;  // Needed specifically for monophonic notes when toggleing tonic switches
 
 int activeCount = 0;   // how many notes are active/selected (0 === 1 active note)
 int activeVoltages[8]; // active quantized voltages (from low to high)
@@ -122,7 +123,8 @@ void setActiveNotes(int index) {
     for (int i=0; i<LENGTH; i++) {
       if (i == index) {
         activeMonophonicNotes[i] = HIGH;
-        setVoltageOut(i);
+        lastTouchedIndex = i;
+        setVoltageOut(lastTouchedIndex);
       } else {
         activeMonophonicNotes[i] = LOW;
       }
@@ -210,6 +212,9 @@ void loop() {
     Serial.print("switched: "); Serial.println(newSwitchStates[2]);
     oldSwitchStates[2] = newSwitchStates[2];
     setActiveVoltages();
+    if (!QUANTIZER_MODE) {
+      setVoltageOut(lastTouchedIndex);
+    }
   }
 
   // Iterate over first 8 touch sensors
