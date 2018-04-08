@@ -183,6 +183,9 @@ void setup() {
   // A1 acting as digitalInput
   pinMode(A1, INPUT_PULLUP);
   toggleMode(digitalRead(A1));
+
+  pinMode(A2, OUTPUT);
+  digitalWrite(A2, HIGH);
 }
 
 
@@ -224,7 +227,9 @@ void loop() {
     // if it *is* touched and *wasnt* touched before, alert!
     if ( (currtouched & _BV(i) ) && !( lasttouched & _BV(i) ) ) {
       Serial.print(i); Serial.print(" touched :: "); Serial.println(i, BIN);
-
+      
+      
+      digitalWrite(A2, LOW); // SET GATE HIGH (opposite via schmitt trigger)
       setActiveNotes(i);
     }
 
@@ -234,6 +239,10 @@ void loop() {
     //  if it *was* touched and now *isnt*, alert!
     if (!(currtouched & _BV(i)) && (lasttouched & _BV(i)) ) {
 
+      
+      digitalWrite(A2, HIGH); // SET GATE LOW
+
+
       Serial.print("active voltages -->   ");
       for (int i=0; i<LENGTH; i++) {
         Serial.print(activeVoltages[i]); Serial.print(" : ");
@@ -242,9 +251,6 @@ void loop() {
       Serial.println("");
       for (int i=0; i<LENGTH; i++) {
         Serial.print(thresholdArray[i]); Serial.print(" : ");
-//        if (!activeNotes[i]) {
-//          digitalWrite(ledPins[i], LOW);
-//        }
       }
 
       Serial.println("");
