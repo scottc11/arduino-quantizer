@@ -229,7 +229,7 @@ void loop() {
       Serial.print(i); Serial.print(" touched :: "); Serial.println(i, BIN);
       
       
-      digitalWrite(A2, LOW); // SET GATE HIGH (opposite via schmitt trigger)
+      digitalWrite(A2, HIGH); // SET GATE HIGH (opposite via schmitt trigger)
       setActiveNotes(i);
     }
 
@@ -240,7 +240,7 @@ void loop() {
     if (!(currtouched & _BV(i)) && (lasttouched & _BV(i)) ) {
 
       
-      digitalWrite(A2, HIGH); // SET GATE LOW
+      digitalWrite(A2, LOW); // SET GATE LOW
 
 
       Serial.print("active voltages -->   ");
