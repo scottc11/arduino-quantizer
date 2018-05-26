@@ -26,6 +26,8 @@ bool newModeSwitchState = 0;
 bool oldModeSwitchState = 0;
 bool QUANTIZER_MODE = false;
 
+int GATE_PIN = A2;
+
 // Keeps track of the last pins touched
 uint16_t lasttouched = 0;
 uint16_t currtouched = 0;
@@ -36,7 +38,7 @@ bool newSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
 bool oldSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 
-int ledPins[] = {2, 3, 4, 5, 6, 7, 8, 9}; // LED pins
+int ledPins[] = {9, 8, 7, 6, 5, 4, 3, 2}; // LED pins: they are backwards order because I'm a goof.
 int quantizedVoltages[8][2] = {
     {0, 0}, // I
     {136.5, 0},
@@ -71,7 +73,7 @@ void setActiveVoltageThresholds(int count) {
 // SET ACTIVE NOTES FOR Vout
 void setActiveVoltages() {
   activeCount = 0;
-  for (int i=0; i<LENGTH; i++) {
+  for (int i=0; i<LENGTH; i++) {                              
     if (activeQuantizedNotes[i] == true) {
       int state = newSwitchStates[i];
       activeVoltages[activeCount] = quantizedVoltages[i][state];
@@ -184,8 +186,8 @@ void setup() {
   pinMode(A1, INPUT_PULLUP);
   toggleMode(digitalRead(A1));
 
-  pinMode(A2, OUTPUT);
-  digitalWrite(A2, HIGH);
+  pinMode(GATE_PIN, OUTPUT);
+  digitalWrite(GATE_PIN, HIGH);
 }
 
 
@@ -229,7 +231,7 @@ void loop() {
       Serial.print(i); Serial.print(" touched :: "); Serial.println(i, BIN);
       
       
-      digitalWrite(A2, HIGH); // SET GATE HIGH (opposite via schmitt trigger)
+      digitalWrite(GATE_PIN, HIGH); // SET GATE HIGH (opposite via schmitt trigger)
       setActiveNotes(i);
     }
 
@@ -240,7 +242,7 @@ void loop() {
     if (!(currtouched & _BV(i)) && (lasttouched & _BV(i)) ) {
 
       
-      digitalWrite(A2, LOW); // SET GATE LOW
+      digitalWrite(GATE_PIN, LOW); // SET GATE LOW
 
 
       Serial.print("active voltages -->   ");
