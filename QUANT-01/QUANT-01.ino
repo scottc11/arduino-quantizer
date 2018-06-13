@@ -16,12 +16,12 @@ int LENGTH = 8; // length of arrays
 
 
 // VOLTAGE INPUT/OUTPUT
-int VinPin = A0;    // Voltage Input Pin
+int VinPin = A1;    // Voltage Input Pin
 int Vin = 0;        // Variable to store value of VinPin
 int Vout = 0;       // quantized voltage output
 
 // MODE
-int ModePin = A1;   // toggles QUANTIZER_MODE variable true/false
+int MODE_PIN = A0;   // toggles QUANTIZER_MODE variable true/false
 bool newModeSwitchState = 0;
 bool oldModeSwitchState = 0;
 bool QUANTIZER_MODE = false;
@@ -35,9 +35,12 @@ uint16_t lasttouched = 0;
 uint16_t currtouched = 0;
 
 // Toggle Switches
-int switchPins[] = {10, 11, 12, 13, 0, 0, 0, 0};
-bool newSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
-bool oldSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
+int switchPins[] = {0, 0, 10, 0, 11, 12, 13, 0};
+
+// variables to hold bitmask values of switch states. These will essentially be the equivalent of an array containing 
+// 8 integers with the values of 0 or 1. Use bitRead(newSwitchStates, index) to get the value of a bit
+byte newSwitchStates = 0;
+byte oldSwitchStates = 0;
 
 
 int ledPins[] = {9, 8, 7, 6, 5, 4, 3, 2}; // LED pins: they are backwards order because I'm a goof.
@@ -45,14 +48,14 @@ int OCTAVE = 0;
 int OCTAVE_VALUES[] = {0, 819, 1638, 2457, 3276};
 
 int quantizedVoltages[8][2] = {
-    {0, 0}, // I
-    {136.5, 0},
-    {204.75, 273},
-    {341.25, 0},
-    {477.75, 0},
-    {614.25, 0},
-    {750.75, 0},
-    {819, 0} // VIII
+    { 0, 0 }, // I
+    { 136.5, 0 },
+    { 204.75, 273 },   // min3, maj3
+    { 341.25, 409.5 }, // per4, aug4
+    { 409.5, 477.75 }, // dim5, per5
+    { 546, 614.25 },   // min6, maj6
+    { 682.5, 750.75 }, // min7, maj7
+    { 819, 0 } // VIII
   };
 
 bool activeQuantizedNotes[] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -81,7 +84,7 @@ void setActiveVoltages() {
   activeCount = 0;
   for (int i=0; i<LENGTH; i++) {                              
     if (activeQuantizedNotes[i] == true) {
-      int state = newSwitchStates[i];
+      uint8_t state = bitRead(newSwitchStates, i);
       activeVoltages[activeCount] = quantizedVoltages[i][state];
       activeCount += 1;
     }
@@ -99,7 +102,7 @@ void setVoltageOut(int index) {
     Vin = analogRead(VinPin);
     for (int i=0; i<activeCount; i++) {
       if (Vin < thresholdArray[i]) {
-        Vout = activeVoltages[i] + OCTAVE_VALUES[OCTAVE];
+        Vout = activeVoltages[i] + OCTAVE_VALUES[OCTAVE]; // state not needed here, see --> setActiveVoltages()
   
         // Set quantized voltage output
         dac.setVoltage(Vout, false);
@@ -108,10 +111,9 @@ void setVoltageOut(int index) {
       delay(1);
     }
   } else {
-    int state = newSwitchStates[index];
+    uint8_t state = bitRead(newSwitchStates, index);
     Vout = quantizedVoltages[index][state] + OCTAVE_VALUES[OCTAVE];
-    // Set quantized voltage output
-    dac.setVoltage(Vout, false);
+    dac.setVoltage(Vout, false); // Set quantized voltage output
   }
 }
 
@@ -220,14 +222,18 @@ void setup() {
     pinMode(ledPins[p], OUTPUT); // Set the mode to OUTPUT
   }
   // Set pinouts for toggle Switches
+  pinMode(13, INPUT);
   pinMode(12, INPUT);
-
+  pinMode(11, INPUT);
+  pinMode(10, INPUT);```````````````````````````````````````````````````````````
+  
   // A1 acting as digitalInput
-  pinMode(A1, INPUT_PULLUP);
-  toggleMode(digitalRead(A1));
+  pinMode(MODE_PIN, INPUT_PULLUP);
+  toggleMode(digitalRead(MODE_PIN));
 
   pinMode(GATE_PIN, OUTPUT);
   digitalWrite(GATE_PIN, HIGH);
+
 }
 
 
@@ -240,12 +246,12 @@ void setup() {
 // ==============================================================================================================
 
 void loop() {
-
+  
   // Get the currently touched pads
   // cap.touched will return 16 bits (one byte), with each bit (from 0 - 12) representing the corrosponding touch pad
   currtouched = cap.touched();
 
-  newModeSwitchState = digitalRead(A1);
+  newModeSwitchState = digitalRead(MODE_PIN);
 
   if (newModeSwitchState != oldModeSwitchState) {
     Serial.print("Switching MODE to: "); Serial.println(newModeSwitchState);
@@ -253,19 +259,27 @@ void loop() {
     toggleMode(newModeSwitchState);
   }
 
-  
-  newSwitchStates[2] = digitalRead(12);
 
-  if ( newSwitchStates[2] != oldSwitchStates[2] ) {
-    Serial.print("switched: "); Serial.println(newSwitchStates[2]);
-    oldSwitchStates[2] = newSwitchStates[2];
+
+  // get switch states of each scale step
+  for (uint8_t i=0; i < 8; i++) {
+    if (i == 2 || i == 4 || i == 5 || i == 6) {
+      uint8_t state = digitalRead(switchPins[i]);
+      bitWrite(newSwitchStates, i, state);
+    }
+  }
+  
+  if ( newSwitchStates != oldSwitchStates ) {
+    oldSwitchStates = newSwitchStates;
     setActiveVoltages();
     if (!QUANTIZER_MODE) {
       setVoltageOut(lastTouchedIndex);
     }
   }
+  
 
-  // Iterate over first 8 touch sensors
+
+  // Iterate over touch sensors
   for (uint8_t i=0; i<12; i++) {
 
     // BUTTON TOUCHED
@@ -292,23 +306,24 @@ void loop() {
       
       digitalWrite(GATE_PIN, LOW); // SET GATE LOW
 
-      Serial.print("OCTAVE -->   ");
+      Serial.print(" .             OCTAVE -->   ");
       Serial.println(OCTAVE);
       
-      Serial.print("active voltages -->   ");
+      Serial.print(" .    active voltages -->   ");
       for (int i=0; i<LENGTH; i++) {
         Serial.print(activeVoltages[i]); Serial.print(" : ");
       }
 
       Serial.println("");
+      Serial.print("Voltage IN thresholds -->   ");
       for (int i=0; i<LENGTH; i++) {
         Serial.print(thresholdArray[i]); Serial.print(" : ");
       }
 
       Serial.println("");
-      Serial.print("active tonics count: "); Serial.println(activeCount);
+      Serial.print("  active tonics count -->   "); Serial.println(activeCount);
 
-      Serial.print(i); Serial.println(" released");
+//      Serial.print(i); Serial.println(" released");
     }
   }
 
