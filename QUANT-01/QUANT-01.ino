@@ -27,6 +27,8 @@ bool oldModeSwitchState = 0;
 bool QUANTIZER_MODE = false;
 
 int GATE_PIN = A2;
+int OCTAVE_UP_PIN = 9;
+int OCTAVE_DOWN_PIN = 8;
 
 // Keeps track of the last pins touched
 uint16_t lasttouched = 0;
@@ -39,6 +41,9 @@ bool oldSwitchStates[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 
 int ledPins[] = {9, 8, 7, 6, 5, 4, 3, 2}; // LED pins: they are backwards order because I'm a goof.
+int OCTAVE = 0;
+int OCTAVE_VALUES[] = {0, 819, 1638, 2457, 3276};
+
 int quantizedVoltages[8][2] = {
     {0, 0}, // I
     {136.5, 0},
@@ -69,8 +74,9 @@ void setActiveVoltageThresholds(int count) {
 }
 
 
-
+// -----------------------------------
 // SET ACTIVE NOTES FOR Vout
+// -----------------------------------
 void setActiveVoltages() {
   activeCount = 0;
   for (int i=0; i<LENGTH; i++) {                              
@@ -84,13 +90,16 @@ void setActiveVoltages() {
 }
 
 
-
+// -----------------------------------
+// SET VOLTAGE OUT
+//   - final stage determining which voltage to set the DAC too
+// -----------------------------------
 void setVoltageOut(int index) {
   if (QUANTIZER_MODE) {
     Vin = analogRead(VinPin);
     for (int i=0; i<activeCount; i++) {
       if (Vin < thresholdArray[i]) {
-        Vout = activeVoltages[i];
+        Vout = activeVoltages[i] + OCTAVE_VALUES[OCTAVE];
   
         // Set quantized voltage output
         dac.setVoltage(Vout, false);
@@ -100,18 +109,22 @@ void setVoltageOut(int index) {
     }
   } else {
     int state = newSwitchStates[index];
-    Vout = quantizedVoltages[index][state];
+    Vout = quantizedVoltages[index][state] + OCTAVE_VALUES[OCTAVE];
     // Set quantized voltage output
     dac.setVoltage(Vout, false);
   }
 }
 
 
-
+// -----------------------------------
+// SET ACTIVE NOTES
+// - based on current mode of quantizer, set the 'active' notes based on user selection via touch pads
+// note: this is not setting the voltage!
+// -----------------------------------
 void setActiveNotes(int index) {
   if (QUANTIZER_MODE) {
     // activate / deactivate notes
-//    activeNotes[index] = !activeNotes[index];
+    // activeNotes[index] = !activeNotes[index];
 
     activeQuantizedNotes[index] = !activeQuantizedNotes[index];
     
@@ -137,7 +150,10 @@ void setActiveNotes(int index) {
 }
 
 
-// SET MODE
+
+// -----------------------------------
+// SET/TOGGLE MODE
+// -----------------------------------
 void toggleMode(bool switchState) {
   QUANTIZER_MODE = switchState;
 
@@ -160,6 +176,30 @@ void toggleMode(bool switchState) {
 }
 
 
+
+// -----------------------------------
+// SET OCTAVE
+// -----------------------------------
+void setOctave(int BUTTON) {
+  if (BUTTON == OCTAVE_UP_PIN) {
+    if (OCTAVE < 4) {
+      OCTAVE += 1;
+    }
+  }
+  else if (BUTTON == OCTAVE_DOWN_PIN) {
+    if (OCTAVE > 0) {
+      OCTAVE -= 1;
+    }
+  }
+  
+}
+
+
+
+
+
+// ==============================================================================================================
+// SETUP
 // ==============================================================================================================
 
 void setup() {
@@ -195,6 +235,9 @@ void setup() {
 
 
 
+// ==============================================================================================================
+// LOOP
+// ==============================================================================================================
 
 void loop() {
 
@@ -223,16 +266,21 @@ void loop() {
   }
 
   // Iterate over first 8 touch sensors
-  for (uint8_t i=0; i<LENGTH; i++) {
+  for (uint8_t i=0; i<12; i++) {
 
     // BUTTON TOUCHED
     // if it *is* touched and *wasnt* touched before, alert!
     if ( (currtouched & _BV(i) ) && !( lasttouched & _BV(i) ) ) {
       Serial.print(i); Serial.print(" touched :: "); Serial.println(i, BIN);
       
-      
-      digitalWrite(GATE_PIN, HIGH); // SET GATE HIGH (opposite via schmitt trigger)
-      setActiveNotes(i);
+      if (i < 8) {
+        digitalWrite(GATE_PIN, HIGH); // SET GATE HIGH (opposite via schmitt trigger)
+        setActiveNotes(i); 
+      }
+      else if (i > 7) {
+        setOctave(i);
+      }
+
     }
 
 
@@ -244,7 +292,9 @@ void loop() {
       
       digitalWrite(GATE_PIN, LOW); // SET GATE LOW
 
-
+      Serial.print("OCTAVE -->   ");
+      Serial.println(OCTAVE);
+      
       Serial.print("active voltages -->   ");
       for (int i=0; i<LENGTH; i++) {
         Serial.print(activeVoltages[i]); Serial.print(" : ");
