@@ -1,3 +1,5 @@
+GerberFiles/
+parts/
 .DS_Store
 *.s##
 *.s#1

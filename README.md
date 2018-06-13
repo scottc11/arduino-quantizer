@@ -26,7 +26,7 @@ The `Vout` will be determined depending on which `MODE` the quantizer is in:
 Modular synths tend to follow a scheme were a specific change in voltage – such as 1.00 volts – results in a precisely one octave change in pitch. In a 1 volt per octave scheme, 1/12 of a volt change results in a semitone change in pitch.
 
 ```
-5.00v == 5 octaves
+5.00v == 5 octaves == 4095
 1.00v == 1 octave == 819
 0.08333v == half-tone == 68.25
 0.16666v == whole-tone == 136.5
